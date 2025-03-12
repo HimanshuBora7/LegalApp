@@ -34,19 +34,35 @@ def fetch_indian_kanoon_results(keyword):
 def fetch_austlii_search_results(keyword):
     encoded_keyword = quote_plus(keyword)
     search_url = f"https://www.austlii.edu.au/cgi-bin/sinosrch.cgi?method=auto&query={encoded_keyword}"
+    
     headers = {"User-Agent": "Mozilla/5.0"}
-    response = requests.get(search_url, headers=headers)
-    if response.status_code != 200:
-        return []
+    
+    try:
+        response = requests.get(search_url, headers=headers, timeout=20)
+        response.raise_for_status()  # Raise an exception for HTTP error responses
+    except requests.exceptions.RequestException as e:
+        print("Error fetching AustLII data:", e)
+        # Return a fallback result indicating the problem.
+        return [{
+            "title": "AustLII",
+            "link": "",
+            "details": "AustLII results are currently unavailable due to a connection error."
+        }]
+    
     soup = BeautifulSoup(response.content, "html.parser")
     results = []
+    
+    # Iterate over all anchors; only process those that match the expected pattern.
     for a in soup.find_all("a", href=True):
         href = a["href"]
         if "/cgi-bin/viewdoc/" not in href:
             continue
+        
+        # Build full URL if necessary.
         link = href if href.startswith("http") else "https://www.austlii.edu.au" + href
         title = a.get_text(strip=True)
         if not title:
+            # Try to get non-empty text from the siblings.
             next_text = a.next_sibling
             while next_text:
                 if hasattr(next_text, "strip") and next_text.strip():
@@ -54,11 +70,26 @@ def fetch_austlii_search_results(keyword):
                     break
                 next_text = next_text.next_sibling
         details = ""
+        # Get additional details if available.
         p_meta = a.find_next("p", class_="meta")
         if p_meta:
             details = p_meta.get_text(strip=True)
-        results.append({"title": title, "link": link, "details": details})
+        
+        results.append({
+            "title": title,
+            "link": link,
+            "details": details
+        })
+        
+    if not results:
+        results.append({
+            "title": "AustLII",
+            "link": "",
+            "details": "No results found on AustLII."
+        })
+    
     return results
+
 
 from selenium import webdriver
 from selenium.webdriver.edge.options import Options
