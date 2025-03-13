@@ -1,10 +1,10 @@
 import streamlit as st
-import time
 from urllib.parse import quote_plus
 from bs4 import BeautifulSoup
 import requests
 from selenium import webdriver
-from selenium.webdriver.edge.options import Options
+from selenium.webdriver.chrome.options import Options as ChromeOptions
+from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -17,7 +17,7 @@ def fetch_indian_kanoon_results(keyword, page):
     """
     For Indian Kanoon:
       - Page 1 uses the base URL without the pagenum parameter.
-      - For subsequent pages, the URL uses &pagenum=page-1
+      - For subsequent pages, the URL adds '&pagenum=page-1'.
     """
     encoded_keyword = quote_plus(keyword)
     if page == 1:
@@ -90,14 +90,19 @@ def fetch_austlii_search_results(keyword):
 
 def fetch_canlii_search_results(keyword):
     base_url = "https://www.canlii.org/en/"
-    edge_options = Options()
-    edge_options.add_argument("--headless")
-    edge_options.add_argument("--disable-gpu")
-    driver = webdriver.Edge(options=edge_options)
+    chrome_options = ChromeOptions()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    # Path where chromedriver is available on Streamlit Cloud
+    chrome_service = ChromeService(executable_path="/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
     try:
         driver.get(base_url)
+        # Remove cookie consent blocker if present.
         driver.execute_script(
-            "if(document.getElementById('cookieConsentBlocker')){document.getElementById('cookieConsentBlocker').style.display = 'none';}"
+            "if(document.getElementById('cookieConsentBlocker'))"
+            "{document.getElementById('cookieConsentBlocker').style.display = 'none';}"
         )
         search_bar = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#textInput"))
@@ -108,7 +113,7 @@ def fetch_canlii_search_results(keyword):
         )
         search_button.click()
         WebDriverWait(driver, 40).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "a[data-result-uuid]"))
+           EC.presence_of_element_located((By.CSS_SELECTOR, "a[data-result-uuid]"))
         )
         html = driver.page_source
     except Exception as err:
@@ -127,10 +132,12 @@ def fetch_canlii_search_results(keyword):
     return results
 
 def fetch_justia_search_results(keyword, page):
-    edge_options = Options()
-    edge_options.add_argument("--headless")
-    edge_options.add_argument("--disable-gpu")
-    driver = webdriver.Edge(options=edge_options)
+    chrome_options = ChromeOptions()
+    chrome_options.add_argument("--headless")
+    chrome_options.add_argument("--disable-gpu")
+    chrome_options.add_argument("--no-sandbox")
+    chrome_service = ChromeService(executable_path="/usr/bin/chromedriver")
+    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
     try:
         search_url = (
             f"https://www.justia.com/search?q={quote_plus(keyword)}"
@@ -160,7 +167,7 @@ def fetch_justia_search_results(keyword, page):
 
 def format_results(results, source_name):
     """
-    Generic formatting for sources that restart numbering.
+    Generic formatting for sources that restart numbering for each search.
     """
     formatted = f"### {source_name} Results:\n\n"
     if not results:
@@ -176,16 +183,14 @@ def format_results(results, source_name):
 def format_indian_kanoon_results(results, current_page):
     """
     Format Indian Kanoon results with continuous numbering.
-    (For example, if page 1 returns 9 results then page 2 will start at 10.)
+    If page 1 returns less than 10 results then page 2 starts counting immediately after.
     """
     if not results:
         return "No results found."
     if "ik_counts" not in st.session_state:
         st.session_state.ik_counts = {}
     st.session_state.ik_counts[current_page] = len(results)
-    cumulative = 0
-    for page in range(1, current_page):
-        cumulative += st.session_state.ik_counts.get(page, 0)
+    cumulative = sum(st.session_state.ik_counts.get(page, 0) for page in range(1, current_page))
     start_num = cumulative + 1
     formatted = f"### Indian Kanoon Results (Page {current_page})\n\n"
     for i, res in enumerate(results, start=start_num):
@@ -204,9 +209,7 @@ def format_justia_results(results, current_page):
     if "justia_counts" not in st.session_state:
         st.session_state.justia_counts = {}
     st.session_state.justia_counts[current_page] = len(results)
-    cumulative = 0
-    for page in range(1, current_page):
-        cumulative += st.session_state.justia_counts.get(page, 0)
+    cumulative = sum(st.session_state.justia_counts.get(page, 0) for page in range(1, current_page))
     start_num = cumulative + 1
     formatted = f"### Justia Results (Page {current_page})\n\n"
     for i, res in enumerate(results, start=start_num):
@@ -221,8 +224,7 @@ def main():
     st.title("Legal Search Dashboard")
     st.write("This dashboard searches multiple legal databases for your query.")
 
-    # --- Checkbox Options to Choose Which Sources to Search ---
-    # These checkboxes let you select which sites are to be queried.
+    # --- Checkbox Options to Choose Which Sites to Search ---
     search_ik = st.checkbox("Indian Kanoon", value=True)
     search_al = st.checkbox("AustLII", value=True)
     search_cl = st.checkbox("CanLII", value=True)
@@ -241,35 +243,28 @@ def main():
     # --- Search Input ---
     keyword_input = st.text_input("Enter keyword to search:", value=st.session_state.keyword)
 
-    # When the "Search" button is clicked, update session state and fetch results only for selected sites.
+    # When "Search" is clicked, update session state and fetch results for selected sites.
     if st.button("Search", key="search_button"):
         st.session_state.keyword = keyword_input
-
         if search_ik:
             st.session_state.ik_page = 1  # reset Indian Kanoon pagination
             st.session_state.ik_results = fetch_indian_kanoon_results(st.session_state.keyword, st.session_state.ik_page)
         else:
             st.session_state.ik_results = []
-        
         if search_al:
             st.session_state.austlii_results = fetch_austlii_search_results(st.session_state.keyword)
         else:
             st.session_state.austlii_results = []
-        
         if search_cl:
             st.session_state.canlii_results = fetch_canlii_search_results(st.session_state.keyword)
         else:
             st.session_state.canlii_results = []
-        
         if search_justia:
             st.session_state.justia_page = 1  # reset Justia pagination
             st.session_state.justia_results = fetch_justia_search_results(st.session_state.keyword, st.session_state.justia_page)
         else:
             st.session_state.justia_results = []
-        
         st.session_state.results_fetched = True
-
-        # Reset stored counts for numbering
         st.session_state.ik_counts = {}
         st.session_state.justia_counts = {}
 
@@ -289,15 +284,12 @@ def main():
                 st.session_state.ik_results = fetch_indian_kanoon_results(st.session_state.keyword, st.session_state.ik_page)
                 ik_container.markdown(format_indian_kanoon_results(st.session_state.ik_results, st.session_state.ik_page))
             st.markdown("---")
-        
         if search_al:
             st.markdown(format_results(st.session_state.austlii_results, "AustLII"))
             st.markdown("---")
-        
         if search_cl:
             st.markdown(format_results(st.session_state.canlii_results, "CanLII"))
             st.markdown("---")
-        
         if search_justia:
             st.markdown("### Justia Results")
             justia_container = st.empty()
