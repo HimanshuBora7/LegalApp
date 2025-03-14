@@ -25,7 +25,9 @@ def test_chromedriver():
         chrome_options.binary_location = chrome_binary_path
         st.write(f"Using Chrome binary at: {chrome_binary_path}")
     else:
-        st.error("Chrome binary not found")
+        st.error("Chrome binary not found. Listing /usr/bin and /usr/lib/chromium-browser directories for debugging:")
+        st.text(os.popen("ls /usr/bin").read())
+        st.text(os.popen("ls /usr/lib/chromium-browser").read())
         return
 
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
