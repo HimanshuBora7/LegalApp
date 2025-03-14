@@ -95,6 +95,7 @@ def fetch_canlii_search_results(keyword):
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     try:
         driver.get(base_url)
@@ -135,6 +136,7 @@ def fetch_justia_search_results(keyword, page):
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
+    chrome_options.add_argument("--disable-dev-shm-usage")
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
     try:
         search_url = (
@@ -172,26 +174,6 @@ def format_results(results, source_name):
         formatted += "No results found.\n"
         return formatted
     for i, res in enumerate(results, 1):
-        formatted += f"**{i}. {res['title']}**\n- Link: {res['link']}\n"
-        if res.get("details"):
-            formatted += f"- Details: {res['details']}\n"
-        formatted += "\n"
-    return formatted
-
-def format_indian_kanoon_results(results, current_page):
-    """
-    Format Indian Kanoon results with continuous numbering.
-    If page 1 returns less than 10 results then page 2 starts counting immediately after.
-    """
-    if not results:
-        return "No results found."
-    if "ik_counts" not in st.session_state:
-        st.session_state.ik_counts = {}
-    st.session_state.ik_counts[current_page] = len(results)
-    cumulative = sum(st.session_state.ik_counts.get(page, 0) for page in range(1, current_page))
-    start_num = cumulative + 1
-    formatted = f"### Indian Kanoon Results (Page {current_page})\n\n"
-    for i, res in enumerate(results, start=start_num):
         formatted += f"**{i}. {res['title']}**\n- Link: {res['link']}\n"
         if res.get("details"):
             formatted += f"- Details: {res['details']}\n"
