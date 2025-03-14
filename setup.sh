@@ -16,31 +16,25 @@ enableCORS = false\n\
 apt-get update
 apt-get install -y unzip curl wget
 
-# Download and extract portable Chromium
-echo "Downloading portable Chromium..."
-wget -O /tmp/chrome-linux.zip https://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/706915/chrome-linux.zip
-if [ $? -ne 0 ]; then
-    echo "Failed to download Chromium"
-    exit 1
-fi
+# Install Firefox
+apt-get install -y firefox
 
-echo "Extracting portable Chromium..."
-unzip /tmp/chrome-linux.zip -d /tmp
-if [ $? -ne 0 ]; then
-    echo "Failed to extract Chromium"
-    exit 1
-fi
+# Install Geckodriver
+GECKODRIVER_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep 'tag_name' | cut -d\" -f4)
+wget -O /tmp/geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz"
+tar -xzf /tmp/geckodriver.tar.gz -C /tmp
+chmod +x /tmp/geckodriver
+mv /tmp/geckodriver /usr/local/bin/
 
-chmod +x /tmp/chrome-linux/chrome
+# Debugging: Verify Firefox and Geckodriver installation
+echo "Verifying Firefox installation:"
+firefox --version || echo "Firefox version check failed"
 
-# Set environment variable for Chrome binary
-echo "export CHROME_BIN=/tmp/chrome-linux/chrome" >> ~/.bashrc
-source ~/.bashrc
-
-# Debugging: Verify Chromium installation
-echo "Verifying Chromium installation:"
-/tmp/chrome-linux/chrome --version || echo "Portable Chromium version check failed"
+echo "Verifying Geckodriver installation:"
+geckodriver --version || echo "Geckodriver version check failed"
 
 # Debugging: List contents of the relevant directories
-echo "Listing /tmp/chrome-linux directory:"
-ls /tmp/chrome-linux
+echo "Listing /usr/bin directory:"
+ls /usr/bin
+echo "Listing /usr/local/bin directory:"
+ls /usr/local/bin

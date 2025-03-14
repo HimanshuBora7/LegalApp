@@ -1,4 +1,7 @@
 import streamlit as st
+from selenium import webdriver
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.firefox.options import Options as FirefoxOptions
 import os
 import subprocess
 
@@ -16,12 +19,15 @@ def execute_command(command):
     except Exception as e:
         st.error(f"Error executing command '{command}': {e}")
 
-st.title("Portable Chromium Installation Verification")
-st.write("This app checks if portable Chromium is installed correctly.")
+st.title("Firefox and Geckodriver Installation Verification")
+st.write("This app checks if Firefox and Geckodriver are installed correctly.")
 
 st.write("### Directory Contents:")
-list_directory_contents("/tmp/chrome-linux")
+list_directory_contents("/usr/bin")
+list_directory_contents("/usr/local/bin")
 
 st.write("### Paths of Installed Packages:")
-execute_command("which /tmp/chrome-linux/chrome || echo '/tmp/chrome-linux/chrome not found'")
-execute_command("/tmp/chrome-linux/chrome --version || echo 'Portable Chromium version check failed'")
+execute_command("which firefox || echo 'firefox not found'")
+execute_command("firefox --version || echo 'Firefox version check failed'")
+execute_command("which geckodriver || echo 'geckodriver not found'")
+execute_command("geckodriver --version || echo 'Geckodriver version check failed'")
