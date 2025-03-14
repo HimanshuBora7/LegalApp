@@ -12,7 +12,6 @@ port = $PORT\n\
 enableCORS = false\n\
 " > ~/.streamlit/config.toml
 
-# Update package list and install dependencies
 apt-get update
 apt-get install -y unzip curl wget
 
@@ -20,22 +19,30 @@ apt-get install -y unzip curl wget
 echo "Installing Chromium..."
 apt-get install -y chromium-browser
 
-# Add Chromium to the PATH
-echo "Adding Chromium to the PATH..."
-ln -s /usr/bin/chromium-browser /usr/local/bin/chromium-browser
+# Debug: Ensure Chromium is installed
+if [ -f /usr/bin/chromium-browser ]; then
+    echo "Chromium installed successfully"
+else
+    echo "Chromium installation failed"
+    exit 1
+fi
 
-# Verify Chromium installation
-echo "Verifying Chromium installation:"
-/usr/local/bin/chromium-browser --version || echo "chromium-browser version check failed"
+# Symlink Chromium to /usr/local/bin
+ln -s /usr/bin/chromium-browser /usr/local/bin/chromium-browser
 
 # Install ChromeDriver using chromedriver_autoinstaller
 echo "Installing ChromeDriver..."
 pip install chromedriver-autoinstaller
 python -c "import chromedriver_autoinstaller; chromedriver_autoinstaller.install()"
 
-# Debugging: List contents of the relevant directories
-echo "Listing /usr/bin directory:"
+# Debug: List contents of directories
+echo "Listing /usr/bin:"
 ls /usr/bin
-echo "Listing /usr/local/bin directory:"
+echo "Listing /usr/local/bin:"
 ls /usr/local/bin
+echo "Listing /opt/google/chrome:"
+ls /opt/google/chrome
 
+# Verify installations
+/usr/local/bin/chromium-browser --version || echo "Chromium version check failed"
+/usr/local/bin/chromedriver --version || echo "ChromeDriver version check failed"

@@ -26,14 +26,17 @@ st.write("This app checks if Chromium and ChromeDriver are installed correctly."
 st.write("### Directory Contents:")
 list_directory_contents("/usr/bin")
 list_directory_contents("/usr/local/bin")
+list_directory_contents("/opt/google/chrome")
 
 st.write("### Paths of Installed Packages:")
 execute_command("which chromium-browser || echo 'chromium-browser not found'")
 execute_command("/usr/local/bin/chromium-browser --version || echo 'chromium-browser version check failed'")
+execute_command("which chromedriver || echo 'chromedriver not found'")
+execute_command("/usr/local/bin/chromedriver --version || echo 'ChromeDriver version check failed'")
 
 st.write("### Testing ChromeDriver:")
-chromedriver_autoinstaller.install()
 chrome_options = ChromeOptions()
+chrome_options.binary_location = "/usr/local/bin/chromium-browser"
 chrome_options.add_argument("--headless")  # Run in headless mode
 chrome_options.add_argument("--disable-gpu")
 chrome_options.add_argument("--no-sandbox")
