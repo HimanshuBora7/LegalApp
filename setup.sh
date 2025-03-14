@@ -20,10 +20,13 @@ apt-get install -y unzip curl wget
 echo "Installing Chromium..."
 apt-get install -y chromium-browser
 
+# Add Chromium to the PATH
+echo "Adding Chromium to the PATH..."
+ln -s /usr/bin/chromium-browser /usr/local/bin/chromium-browser
+
 # Verify Chromium installation
 echo "Verifying Chromium installation:"
-which chromium-browser || echo "chromium-browser not found"
-chromium-browser --version || echo "chromium-browser version check failed"
+/usr/local/bin/chromium-browser --version || echo "chromium-browser version check failed"
 
 # Install ChromeDriver using chromedriver_autoinstaller
 echo "Installing ChromeDriver..."

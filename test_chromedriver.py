@@ -29,7 +29,7 @@ list_directory_contents("/usr/local/bin")
 
 st.write("### Paths of Installed Packages:")
 execute_command("which chromium-browser || echo 'chromium-browser not found'")
-execute_command("chromium-browser --version || echo 'chromium-browser version check failed'")
+execute_command("/usr/local/bin/chromium-browser --version || echo 'chromium-browser version check failed'")
 
 st.write("### Testing ChromeDriver:")
 chromedriver_autoinstaller.install()
@@ -45,5 +45,4 @@ try:
     st.write(f"Page title: {driver.title}")
     driver.quit()
 except Exception as e:
-    st.error(f"Error: {e}")
-
+        st.error(f"Error: {e}")
