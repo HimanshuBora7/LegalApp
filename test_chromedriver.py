@@ -48,4 +48,4 @@ try:
     st.write(f"Page title: {driver.title}")
     driver.quit()
 except Exception as e:
-        st.error(f"Error: {e}")
+    st.error(f"Error: {e}")
