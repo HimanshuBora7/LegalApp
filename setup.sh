@@ -60,5 +60,8 @@ echo "Listing /opt/google/chrome:"
 ls /opt/google/chrome
 
 # Verify installations
+echo "Verifying Chromium installation..."
 /usr/local/bin/chromium-browser --version || echo "Chromium version check failed"
+
+echo "Verifying ChromeDriver installation..."
 /usr/local/bin/chromedriver --version || echo "ChromeDriver version check failed"
