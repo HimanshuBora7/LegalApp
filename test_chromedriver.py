@@ -3,7 +3,7 @@ from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
-import subprocess
+import os
 
 def find_chrome_binary():
     paths_to_check = ["/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/local/bin/chromium-browser"]
