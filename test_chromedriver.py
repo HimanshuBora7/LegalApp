@@ -14,7 +14,7 @@ def list_directory_contents(directory):
         st.error(f"Error listing contents of {directory}: {e}")
 
 def find_chrome_binary():
-    paths_to_check = ["/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/local/bin/chromium-browser"]
+    paths_to_check = ["/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/bin/chromium"]
     for path in paths_to_check:
         if os.path.exists(path):
             return path
@@ -33,9 +33,9 @@ def test_chromedriver():
         chrome_options.binary_location = chrome_binary_path
         st.write(f"Using Chrome binary at: {chrome_binary_path}")
     else:
-        st.error("Chrome binary not found. Listing /usr/bin and /usr/lib/chromium-browser directories for debugging:")
+        st.error("Chrome binary not found. Listing /usr/bin and /usr/lib directories for debugging:")
         list_directory_contents("/usr/bin")
-        list_directory_contents("/usr/lib/chromium-browser")
+        list_directory_contents("/usr/lib")
         return
 
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
