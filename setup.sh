@@ -16,19 +16,20 @@ enableCORS = false\n\
 apt-get update
 apt-get install -y unzip curl wget
 
-# Install Chromium Browser Snap
-apt-get install -y software-properties-common
-add-apt-repository -y ppa:canonical-chromium-builds/stage
-apt-get update
-apt-get install -y chromium-browser
+# Download and extract portable Chromium
+wget https://commondatastorage.googleapis.com/chromium-browser-snapshots/Linux_x64/706915/chrome-linux.zip -P /tmp
+unzip /tmp/chrome-linux.zip -d /tmp
+chmod +x /tmp/chrome-linux/chrome
 
-# Verify installation of Chromium
+# Set environment variable for Chrome binary
+echo "export CHROME_BIN=/tmp/chrome-linux/chrome" >> ~/.bashrc
+source ~/.bashrc
+
+# Debugging: Verify Chromium installation
 echo "Verifying Chromium installation:"
-which chromium-browser || echo "chromium-browser not found"
-chromium-browser --version || echo "chromium-browser version check failed"
+/tmp/chrome-linux/chrome --version || echo "Portable Chromium version check failed"
 
 # Debugging: List contents of the relevant directories
-echo "Listing /usr/bin directory:"
-ls /usr/bin
-echo "Listing /usr/local/bin directory:"
-ls /usr/local/bin
+echo "Listing /tmp/chrome-linux directory:"
+ls /tmp/chrome-linux
+al/bin

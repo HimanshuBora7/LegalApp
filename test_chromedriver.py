@@ -16,13 +16,12 @@ def execute_command(command):
     except Exception as e:
         st.error(f"Error executing command '{command}': {e}")
 
-st.title("Chromium Installation Verification")
-st.write("This app checks if Chromium is installed correctly.")
+st.title("Portable Chromium Installation Verification")
+st.write("This app checks if portable Chromium is installed correctly.")
 
 st.write("### Directory Contents:")
-list_directory_contents("/usr/bin")
-list_directory_contents("/usr/local/bin")
+list_directory_contents("/tmp/chrome-linux")
 
 st.write("### Paths of Installed Packages:")
-execute_command("which chromium-browser || echo 'chromium-browser not found'")
-execute_command("chromium-browser --version || echo 'chromium-browser version check failed'")
+execute_command("which /tmp/chrome-linux/chrome || echo '/tmp/chrome-linux/chrome not found'")
+execute_command("/tmp/chrome-linux/chrome --version || echo 'Portable Chromium version check failed'")
