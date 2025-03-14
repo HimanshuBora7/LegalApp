@@ -2,7 +2,7 @@ import streamlit as st
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
-from webdriver_manager.chrome import ChromeDriverManager
+import chromedriver_autoinstaller
 import os
 import subprocess
 
@@ -33,17 +33,15 @@ def test_chromedriver():
         chrome_options.binary_location = chrome_binary_path
         st.write(f"Using Chrome binary at: {chrome_binary_path}")
     else:
-        st.error("Chrome binary not found. Listing /usr/bin, /usr/local/bin, and /opt/google/chrome directories for debugging:")
+        st.error("Chrome binary not found. Listing /usr/bin and /usr/local/bin directories for debugging:")
         list_directory_contents("/usr/bin")
         list_directory_contents("/usr/local/bin")
-        list_directory_contents("/opt/google/chrome")
-        st.write("Checking paths of installed packages:")
-        execute_command("which chromium-browser")
-        execute_command("which chromedriver")
-        execute_command("which google-chrome")
         return
 
-    driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
+    # Install ChromeDriver using chromedriver-autoinstaller
+    chromedriver_autoinstaller.install()
+
+    driver = webdriver.Chrome(options=chrome_options)
     try:
         driver.get("https://www.google.com")
         title = driver.title
