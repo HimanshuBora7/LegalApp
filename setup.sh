@@ -15,18 +15,12 @@ enableCORS = false\n\
 apt-get update
 apt-get install -y unzip curl
 
-# Add the Chrome repository and install Chromium
-curl -sS -o - https://dl-ssl.google.com/linux/linux_signing_key.pub | apt-key add -
-sh -c 'echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list.d/google-chrome.list'
-apt-get update
-apt-get install -y google-chrome-stable
+# Install Chromium and ChromeDriver
+apt-get install -y chromium-browser chromium-chromedriver
 
-# Install ChromeDriver
-CHROME_VERSION=$(google-chrome --version | awk '{print $3}' | cut -d'.' -f1)
-wget -N https://chromedriver.storage.googleapis.com/$CHROME_VERSION/chromedriver_linux64.zip -P /tmp
-unzip /tmp/chromedriver_linux64.zip -d /tmp
-chmod +x /tmp/chromedriver
-mv /tmp/chromedriver /usr/local/bin/chromedriver
+# Set environment variable for Chrome binary
+echo "export CHROME_BIN=/usr/bin/chromium-browser" >> ~/.bashrc
+source ~/.bashrc
 
 # Debugging: List contents of the relevant directories
 echo "Listing /usr/bin directory:"

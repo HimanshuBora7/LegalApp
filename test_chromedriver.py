@@ -13,13 +13,6 @@ def list_directory_contents(directory):
     except Exception as e:
         st.error(f"Error listing contents of {directory}: {e}")
 
-def find_chrome_binary():
-    paths_to_check = ["/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/bin/chromium"]
-    for path in paths_to_check:
-        if os.path.exists(path):
-            return path
-    return None
-
 def test_chromedriver():
     chrome_options = ChromeOptions()
     chrome_options.add_argument("--headless")  # Run in headless mode
@@ -27,9 +20,9 @@ def test_chromedriver():
     chrome_options.add_argument("--no-sandbox")
     chrome_options.add_argument("--disable-dev-shm-usage")
 
-    # Dynamically find the Chrome binary path
-    chrome_binary_path = find_chrome_binary()
-    if chrome_binary_path:
+    # Use the CHROME_BIN environment variable to locate the Chrome binary
+    chrome_binary_path = os.getenv("CHROME_BIN")
+    if chrome_binary_path and os.path.exists(chrome_binary_path):
         chrome_options.binary_location = chrome_binary_path
         st.write(f"Using Chrome binary at: {chrome_binary_path}")
     else:
