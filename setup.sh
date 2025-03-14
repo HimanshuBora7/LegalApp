@@ -28,12 +28,28 @@ else
 fi
 
 # Symlink Chromium to /usr/local/bin
-ln -s /usr/bin/chromium-browser /usr/local/bin/chromium-browser
+ln -sf /usr/bin/chromium-browser /usr/local/bin/chromium-browser
+
+# Verify the symlink
+if [ -L /usr/local/bin/chromium-browser ]; then
+    echo "Chromium symlink created successfully"
+else
+    echo "Failed to create Chromium symlink"
+    exit 1
+fi
 
 # Install ChromeDriver using chromedriver_autoinstaller
 echo "Installing ChromeDriver..."
 pip install chromedriver-autoinstaller
 python -c "import chromedriver_autoinstaller; chromedriver_autoinstaller.install()"
+
+# Verify ChromeDriver installation
+if [ -f /usr/local/bin/chromedriver ]; then
+    echo "ChromeDriver installed successfully"
+else
+    echo "ChromeDriver installation failed"
+    exit 1
+fi
 
 # Debug: List contents of directories
 echo "Listing /usr/bin:"
