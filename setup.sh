@@ -1,67 +1,45 @@
 mkdir -p ~/.streamlit/
 
-echo "\
-[general]\n\
-email = \"\"\n\
-" > ~/.streamlit/credentials.toml
+# Create valid credentials.toml
+cat <<EOL > ~/.streamlit/credentials.toml
+[general]
+email = ""
+EOL
 
-echo "\
-[server]\n\
-headless = true\n\
-port = $PORT\n\
-enableCORS = false\n\
-" > ~/.streamlit/config.toml
+# Create valid config.toml
+cat <<EOL > ~/.streamlit/config.toml
+[server]
+headless = true
+port = $PORT
+enableCORS = false
+EOL
 
 apt-get update
 apt-get install -y unzip curl wget
 
 # Install Chromium
-echo "Installing Chromium..."
 apt-get install -y chromium-browser
 
-# Debug: Ensure Chromium is installed
-if [ -f /usr/bin/chromium-browser ]; then
-    echo "Chromium installed successfully"
-else
-    echo "Chromium installation failed"
-    exit 1
-fi
+# Install ChromeDriver
+CHROMEDRIVER_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
+wget -N https://chromedriver.storage.googleapis.com/$CHROMEDRIVER_VERSION/chromedriver_linux64.zip -P /tmp
+unzip /tmp/chromedriver_linux64.zip -d /tmp
+chmod +x /tmp/chromedriver
+mv /tmp/chromedriver /usr/local/bin/chromedriver
 
-# Symlink Chromium to /usr/local/bin
-ln -sf /usr/bin/chromium-browser /usr/local/bin/chromium-browser
+# Source environment variables from secrets
+export CHROME_BIN=/usr/bin/chromium-browser
+export CHROME_DRIVER_PATH=/usr/local/bin/chromedriver
 
-# Verify the symlink
-if [ -L /usr/local/bin/chromium-browser ]; then
-    echo "Chromium symlink created successfully"
-else
-    echo "Failed to create Chromium symlink"
-    exit 1
-fi
+# Debug: Verify installations
+echo "Verifying Chromium installation:"
+$CHROME_BIN --version || echo "Chromium version check failed"
 
-# Install ChromeDriver using chromedriver_autoinstaller
-echo "Installing ChromeDriver..."
-pip install chromedriver-autoinstaller
-python -c "import chromedriver_autoinstaller; chromedriver_autoinstaller.install()"
+echo "Verifying ChromeDriver installation:"
+$CHROME_DRIVER_PATH --version || echo "ChromeDriver version check failed"
 
-# Verify ChromeDriver installation
-if [ -f /usr/local/bin/chromedriver ]; then
-    echo "ChromeDriver installed successfully"
-else
-    echo "ChromeDriver installation failed"
-    exit 1
-fi
-
-# Debug: List contents of directories
+# Debugging: List contents of directories
 echo "Listing /usr/bin:"
 ls /usr/bin
 echo "Listing /usr/local/bin:"
 ls /usr/local/bin
-echo "Listing /opt/google/chrome:"
-ls /opt/google/chrome
-
-# Verify installations
-echo "Verifying Chromium installation..."
-/usr/local/bin/chromium-browser --version || echo "Chromium version check failed"
-
-echo "Verifying ChromeDriver installation..."
-/usr/local/bin/chromedriver --version || echo "ChromeDriver version check failed"
