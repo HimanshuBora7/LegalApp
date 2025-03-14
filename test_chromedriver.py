@@ -13,6 +13,13 @@ def list_directory_contents(directory):
     except Exception as e:
         st.error(f"Error listing contents of {directory}: {e}")
 
+def execute_command(command):
+    try:
+        output = subprocess.check_output(command, shell=True).decode("utf-8")
+        st.text(output)
+    except Exception as e:
+        st.error(f"Error executing command '{command}': {e}")
+
 def test_chromedriver():
     chrome_options = ChromeOptions()
     chrome_options.add_argument("--headless")  # Run in headless mode
@@ -26,9 +33,14 @@ def test_chromedriver():
         chrome_options.binary_location = chrome_binary_path
         st.write(f"Using Chrome binary at: {chrome_binary_path}")
     else:
-        st.error("Chrome binary not found. Listing /usr/bin and /usr/local/bin directories for debugging:")
+        st.error("Chrome binary not found. Listing /usr/bin, /usr/local/bin, and /opt/google/chrome directories for debugging:")
         list_directory_contents("/usr/bin")
         list_directory_contents("/usr/local/bin")
+        list_directory_contents("/opt/google/chrome")
+        st.write("Checking paths of installed packages:")
+        execute_command("which chromium-browser")
+        execute_command("which chromedriver")
+        execute_command("which google-chrome")
         return
 
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
