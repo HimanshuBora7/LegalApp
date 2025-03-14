@@ -13,28 +13,30 @@ enableCORS = false\n\
 " > ~/.streamlit/config.toml
 
 apt-get update
-apt-get install -y unzip curl
+apt-get install -y unzip curl wget
 
-# Check available Chromium packages
-echo "Checking available Chromium packages:"
-apt-cache search chromium
+# Download and install Chromium
+echo "Downloading Chromium..."
+wget -O /tmp/chromium.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+echo "Installing Chromium..."
+apt-get install -y /tmp/chromium.deb
 
-# Install Chromium and ChromeDriver
-echo "Installing chromium-browser and chromium-chromedriver:"
-apt-get install -y chromium-browser chromium-chromedriver
-
-# Debugging: Check paths of installed packages
-echo "Paths of installed packages:"
-which chromium-browser
-which chromedriver
+# Download and install ChromeDriver
+echo "Downloading ChromeDriver..."
+CHROME_VERSION=$(google-chrome --version | grep -oP '\d+\.\d+\.\d+\.\d+')
+wget -N https://chromedriver.storage.googleapis.com/${CHROME_VERSION%%.*}/chromedriver_linux64.zip -P /tmp
+unzip /tmp/chromedriver_linux64.zip -d /tmp
+chmod +x /tmp/chromedriver
+mv /tmp/chromedriver /usr/local/bin/chromedriver
 
 # Set environment variable for Chrome binary
-echo "Setting CHROME_BIN environment variable:"
-echo "export CHROME_BIN=$(which chromium-browser)" >> ~/.bashrc
+echo "export CHROME_BIN=/usr/bin/google-chrome" >> ~/.bashrc
 source ~/.bashrc
 
-# Debugging: List contents of the relevant directories
+# Debugging: List contents of the relevant directories and paths of installed packages
 echo "Listing /usr/bin directory:"
 ls /usr/bin
 echo "Listing /usr/local/bin directory:"
 ls /usr/local/bin
+echo "Listing /opt/google/chrome directory (if it exists):"
+ls /opt/google/chrome || echo "/opt/google/chrome not found"
