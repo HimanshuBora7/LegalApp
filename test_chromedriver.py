@@ -4,6 +4,14 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.chrome.options import Options as ChromeOptions
 from webdriver_manager.chrome import ChromeDriverManager
 import os
+import subprocess
+
+def list_directory_contents(directory):
+    try:
+        contents = subprocess.check_output(["ls", directory]).decode("utf-8")
+        st.text(contents)
+    except Exception as e:
+        st.error(f"Error listing contents of {directory}: {e}")
 
 def find_chrome_binary():
     paths_to_check = ["/usr/bin/google-chrome", "/usr/bin/chromium-browser", "/usr/local/bin/chromium-browser"]
@@ -26,8 +34,8 @@ def test_chromedriver():
         st.write(f"Using Chrome binary at: {chrome_binary_path}")
     else:
         st.error("Chrome binary not found. Listing /usr/bin and /usr/lib/chromium-browser directories for debugging:")
-        st.text(os.popen("ls /usr/bin").read())
-        st.text(os.popen("ls /usr/lib/chromium-browser").read())
+        list_directory_contents("/usr/bin")
+        list_directory_contents("/usr/lib/chromium-browser")
         return
 
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=chrome_options)
