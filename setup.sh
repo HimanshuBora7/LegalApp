@@ -16,32 +16,28 @@ enableCORS = false\n\
 apt-get update
 apt-get install -y unzip curl wget
 
-# Download and install Firefox
-echo "Downloading Firefox..."
-wget -O /tmp/firefox.tar.bz2 https://download.mozilla.org/?product=firefox-latest&os=linux64&lang=en-US
-tar -xjf /tmp/firefox.tar.bz2 -C /tmp
-mv /tmp/firefox /opt/firefox
+# Download and install Microsoft Edge
+echo "Downloading Microsoft Edge..."
+wget -O /tmp/microsoft-edge.deb https://packages.microsoft.com/repos/edge/pool/main/m/microsoft-edge-stable/microsoft-edge-stable_91.0.864.48-1_amd64.deb
+apt-get install -y /tmp/microsoft-edge.deb
 
-# Create a symlink to Firefox
-ln -s /opt/firefox/firefox /usr/local/bin/firefox
+# Download and install Edge WebDriver
+echo "Downloading Edge WebDriver..."
+EDGE_VERSION=$(microsoft-edge --version | grep -oP '\d+\.\d+\.\d+\.\d+')
+wget -O /tmp/edgedriver.zip "https://msedgedriver.azureedge.net/$EDGE_VERSION/edgedriver_linux64.zip"
+unzip /tmp/edgedriver.zip -d /tmp
+chmod +x /tmp/msedgedriver
+mv /tmp/msedgedriver /usr/local/bin/
 
-# Download and install Geckodriver
-echo "Downloading Geckodriver..."
-GECKODRIVER_VERSION=$(curl -s https://api.github.com/repos/mozilla/geckodriver/releases/latest | grep 'tag_name' | cut -d\" -f4)
-wget -O /tmp/geckodriver.tar.gz "https://github.com/mozilla/geckodriver/releases/download/$GECKODRIVER_VERSION/geckodriver-$GECKODRIVER_VERSION-linux64.tar.gz"
-tar -xzf /tmp/geckodriver.tar.gz -C /tmp
-chmod +x /tmp/geckodriver
-mv /tmp/geckodriver /usr/local/bin/
+# Debugging: Verify Microsoft Edge and Edge WebDriver installation
+echo "Verifying Microsoft Edge installation:"
+microsoft-edge --version || echo "Microsoft Edge version check failed"
 
-# Debugging: Verify Firefox and Geckodriver installation
-echo "Verifying Firefox installation:"
-/usr/local/bin/firefox --version || echo "Firefox version check failed"
-
-echo "Verifying Geckodriver installation:"
-/usr/local/bin/geckodriver --version || echo "Geckodriver version check failed"
+echo "Verifying Edge WebDriver installation:"
+msedgedriver --version || echo "Edge WebDriver version check failed"
 
 # Debugging: List contents of the relevant directories
-echo "Listing /opt/firefox directory:"
-ls /opt/firefox
+echo "Listing /usr/bin directory:"
+ls /usr/bin
 echo "Listing /usr/local/bin directory:"
 ls /usr/local/bin
