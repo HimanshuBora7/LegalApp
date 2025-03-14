@@ -16,13 +16,13 @@ enableCORS = false\n\
 apt-get update
 apt-get install -y unzip curl wget
 
-# Install Chromium
+# Install Chromium and verify installation
 apt-get install -y chromium-browser
 
-# Verify Chromium installation
+# Debugging: Verify Chromium installation and list directory contents
 echo "Verifying Chromium installation:"
-which chromium-browser
-chromium-browser --version
+which chromium-browser || echo "chromium-browser not found"
+chromium-browser --version || echo "chromium-browser version check failed"
 
 # Debugging: List contents of the relevant directories
 echo "Listing /usr/bin directory:"

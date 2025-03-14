@@ -24,5 +24,6 @@ list_directory_contents("/usr/bin")
 list_directory_contents("/usr/local/bin")
 
 st.write("### Paths of Installed Packages:")
-execute_command("which chromium-browser")
-execute_command("chromium-browser --version")
+execute_command("which chromium-browser || echo 'chromium-browser not found'")
+execute_command("chromium-browser --version || echo 'chromium-browser version check failed'")
+
