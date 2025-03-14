@@ -19,6 +19,12 @@ apt-get install -y unzip curl
 apt-get install -y chromium-browser
 apt-get install -y chromium-chromedriver
 
+# Debugging: List contents of the relevant directories
+echo "Listing /usr/bin directory:"
+ls /usr/bin
+echo "Listing /usr/lib/chromium-browser directory:"
+ls /usr/lib/chromium-browser
+
 # Create symlinks for Chrome and ChromeDriver
 ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
 ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
