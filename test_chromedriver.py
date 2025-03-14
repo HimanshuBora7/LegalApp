@@ -13,7 +13,7 @@ def test_chromedriver():
     chrome_options.add_argument("--disable-dev-shm-usage")
     
     # Set the path to the Chrome binary
-    chrome_binary_path = "/usr/bin/chromium-browser"
+    chrome_binary_path = "/usr/bin/google-chrome"
     if os.path.exists(chrome_binary_path):
         chrome_options.binary_location = chrome_binary_path
     else:

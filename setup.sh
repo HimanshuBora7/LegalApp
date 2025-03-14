@@ -15,13 +15,10 @@ enableCORS = false\n\
 apt-get update
 apt-get install -y unzip curl
 
-# Install Chromium
-apt-get install -y chromium-driver
+# Install Chromium and ChromeDriver
+apt-get install -y chromium-browser
+apt-get install -y chromium-chromedriver
 
-# Install ChromeDriver
-CHROME_VERSION=$(curl -sS chromedriver.storage.googleapis.com/LATEST_RELEASE)
-wget -N https://chromedriver.storage.googleapis.com/$CHROME_VERSION/chromedriver_linux64.zip -P ~/
-unzip ~/chromedriver_linux64.zip -d ~/
-rm ~/chromedriver_linux64.zip
-mv -f ~/chromedriver /usr/local/bin/chromedriver
-chmod +x /usr/local/bin/chromedriver
+# Create symlinks for Chrome and ChromeDriver
+ln -s /usr/bin/chromium-browser /usr/bin/google-chrome
+ln -s /usr/lib/chromium-browser/chromedriver /usr/local/bin/chromedriver
