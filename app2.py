@@ -8,17 +8,13 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+import os  # Added to handle environment-specific paths if needed
 
 #####################################
 # Search Functions for Various Sources
 #####################################
 
 def fetch_indian_kanoon_results(keyword, page):
-    """
-    For Indian Kanoon:
-      - Page 1 uses the base URL without the pagenum parameter.
-      - For subsequent pages, the URL adds '&pagenum=page-1'.
-    """
     encoded_keyword = quote_plus(keyword)
     if page == 1:
         search_url = f"https://indiankanoon.org/search/?formInput={encoded_keyword}"
@@ -89,54 +85,97 @@ def fetch_austlii_search_results(keyword):
     return results
 
 def fetch_canlii_search_results(keyword):
+    """
+    Fetch search results from the CanLII website using Selenium.
+    """
+
+    # Base URL for CanLII
     base_url = "https://www.canlii.org/en/"
+
+    # Configure Chrome WebDriver options
     chrome_options = ChromeOptions()
-    chrome_options.add_argument("--headless")
-    chrome_options.add_argument("--disable-gpu")
-    chrome_options.add_argument("--no-sandbox")
-    # Path where chromedriver is available on Streamlit Cloud
-    chrome_service = ChromeService(executable_path="/usr/bin/chromedriver")
-    driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+    chrome_options.add_argument("--headless")  # Run in headless mode (no GUI)
+    chrome_options.add_argument("--disable-gpu")  # Disable GPU acceleration
+    chrome_options.add_argument("--no-sandbox")  # Required for some Linux environments
+    chrome_options.add_argument("--disable-dev-shm-usage")  # Avoid shared memory issues
+
+    # Specify the path to ChromeDriver
+    chromedriver_path = "C:/Users/himan/Downloads/chromedriver-win64/chromedriver.exe"
+    if not os.path.exists(chromedriver_path):
+        st.error(f"ChromeDriver not found at {chromedriver_path}")
+        return []
+
+    chrome_service = ChromeService(executable_path=chromedriver_path)
+
+    driver = None
     try:
+        # Initialize the WebDriver
+        driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
+
+        # Open the CanLII website
         driver.get(base_url)
-        # Remove cookie consent blocker if present.
-        driver.execute_script(
-            "if(document.getElementById('cookieConsentBlocker'))"
-            "{document.getElementById('cookieConsentBlocker').style.display = 'none';}"
-        )
+
+        # Handle cookie consent blocker (if it exists)
+        try:
+            driver.execute_script(
+                "if(document.getElementById('cookieConsentBlocker'))"
+                "{document.getElementById('cookieConsentBlocker').style.display = 'none';}"
+            )
+        except Exception as consent_err:
+            # Log error but continue if cookie consent block is not present
+            print(f"Warning: Unable to handle cookie consent - {consent_err}")
+
+        # Locate the search bar and input the search keyword
         search_bar = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#textInput"))
         )
         driver.execute_script("arguments[0].value = arguments[1];", search_bar, keyword)
+
+        # Locate and click the search button
         search_button = WebDriverWait(driver, 20).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, "button[aria-label='Start a search']"))
         )
         search_button.click()
+
+        # Wait for the search results to load
         WebDriverWait(driver, 40).until(
-           EC.presence_of_element_located((By.CSS_SELECTOR, "a[data-result-uuid]"))
+            EC.presence_of_element_located((By.CSS_SELECTOR, "a[data-result-uuid]"))
         )
+
+        # Get the page source
         html = driver.page_source
+
     except Exception as err:
+        # Log the error and handle gracefully
         st.error("Error fetching CanLII results: " + str(err))
         html = ""
     finally:
-        driver.quit()
+        # Quit the WebDriver to release resources
+        if driver:
+            driver.quit()
+
+    # Parse the HTML content using BeautifulSoup
     soup = BeautifulSoup(html, "html.parser")
     results = []
+
+    # Extract search results from the parsed HTML
     for a in soup.select("a[data-result-uuid]"):
         title = a.get_text(strip=True)
         link = a["href"]
         if not link.startswith("http"):
             link = "https://www.canlii.org" + link
         results.append({"title": title, "link": link})
+
     return results
+
 
 def fetch_justia_search_results(keyword, page):
     chrome_options = ChromeOptions()
     chrome_options.add_argument("--headless")
     chrome_options.add_argument("--disable-gpu")
     chrome_options.add_argument("--no-sandbox")
-    chrome_service = ChromeService(executable_path="/usr/bin/chromedriver")
+    chrome_service = ChromeService(executable_path="C:/Users/himan/Downloads/chromedriver-win64/chromedriver.exe")
+
     driver = webdriver.Chrome(service=chrome_service, options=chrome_options)
     try:
         search_url = (
@@ -164,7 +203,6 @@ def fetch_justia_search_results(keyword, page):
 #####################################
 # Formatting Functions
 #####################################
-
 def format_results(results, source_name):
     """
     Generic formatting for sources that restart numbering for each search.
@@ -200,6 +238,13 @@ def format_indian_kanoon_results(results, current_page):
         formatted += "\n"
     return formatted
 
+
+# Main Streamlit App remains unchanged
+# Ensure 'CHROMEDRIVER_PATH' is set to a valid path in your environment
+
+#####################################
+# Formatting Functions (Justia Results)
+#####################################
 def format_justia_results(results, current_page):
     """
     Format Justia results with continuous numbering.
@@ -219,7 +264,6 @@ def format_justia_results(results, current_page):
 #####################################
 # Main Streamlit Dashboard App
 #####################################
-
 def main():
     st.title("Legal Search Dashboard")
     st.write("This dashboard searches multiple legal databases for your query.")
