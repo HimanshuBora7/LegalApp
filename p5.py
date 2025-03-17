@@ -3,8 +3,9 @@ import time
 from urllib.parse import quote_plus
 from bs4 import BeautifulSoup
 import requests
+
 from selenium import webdriver
-from selenium.webdriver.edge.options import Options
+from selenium.webdriver.edge.options import Options  # Using Edge as our browser
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -17,7 +18,7 @@ def fetch_indian_kanoon_results(keyword, page):
     """
     For Indian Kanoon:
       - Page 1 uses the base URL without the pagenum parameter.
-      - For subsequent pages, the URL uses &pagenum=page-1
+      - For subsequent pages, the URL uses &pagenum=page-1.
     """
     encoded_keyword = quote_plus(keyword)
     if page == 1:
@@ -25,9 +26,11 @@ def fetch_indian_kanoon_results(keyword, page):
     else:
         search_url = f"https://indiankanoon.org/search/?formInput={encoded_keyword}&pagenum={page-1}"
     headers = {"User-Agent": "Mozilla/5.0"}
+    
     response = requests.get(search_url, headers=headers)
     if response.status_code != 200:
         return []
+    
     soup = BeautifulSoup(response.content, "html.parser")
     results = []
     for result in soup.find_all("div", class_="result_title"):
@@ -46,6 +49,7 @@ def fetch_austlii_search_results(keyword):
     encoded_keyword = quote_plus(keyword)
     search_url = f"https://www.austlii.edu.au/cgi-bin/sinosrch.cgi?method=auto&query={encoded_keyword}"
     headers = {"User-Agent": "Mozilla/5.0"}
+    
     try:
         response = requests.get(search_url, headers=headers, timeout=20)
         response.raise_for_status()
@@ -56,6 +60,7 @@ def fetch_austlii_search_results(keyword):
             "link": "",
             "details": "AustLII results are currently unavailable due to a connection error."
         }]
+    
     soup = BeautifulSoup(response.content, "html.parser")
     results = []
     for a in soup.find_all("a", href=True):
@@ -90,15 +95,23 @@ def fetch_austlii_search_results(keyword):
 
 def fetch_canlii_search_results(keyword):
     base_url = "https://www.canlii.org/en/"
+    
     edge_options = Options()
     edge_options.add_argument("--headless")
     edge_options.add_argument("--disable-gpu")
-    driver = webdriver.Edge(options=edge_options)
+    # Additional options can be added if needed (e.g., --no-sandbox, --disable-dev-shm-usage)
+    
+    driver = None
+    html = ""
     try:
+        driver = webdriver.Edge(options=edge_options)
         driver.get(base_url)
+        # Hide potential cookie consent blocker
         driver.execute_script(
-            "if(document.getElementById('cookieConsentBlocker')){document.getElementById('cookieConsentBlocker').style.display = 'none';}"
+            "if(document.getElementById('cookieConsentBlocker')) { "
+            "document.getElementById('cookieConsentBlocker').style.display = 'none'; }"
         )
+        # Wait explicitly for the search bar to be present
         search_bar = WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CSS_SELECTOR, "#textInput"))
         )
@@ -113,9 +126,10 @@ def fetch_canlii_search_results(keyword):
         html = driver.page_source
     except Exception as err:
         st.error("Error fetching CanLII results: " + str(err))
-        html = ""
     finally:
-        driver.quit()
+        if driver is not None:
+            driver.quit()
+            
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for a in soup.select("a[data-result-uuid]"):
@@ -130,12 +144,15 @@ def fetch_justia_search_results(keyword, page):
     edge_options = Options()
     edge_options.add_argument("--headless")
     edge_options.add_argument("--disable-gpu")
-    driver = webdriver.Edge(options=edge_options)
+    
+    driver = None
+    html = ""
     try:
         search_url = (
             f"https://www.justia.com/search?q={quote_plus(keyword)}"
             f"&cx=012624009653992735869%3Acyxxdwappru&start={(page - 1) * 10}"
         )
+        driver = webdriver.Edge(options=edge_options)
         driver.get(search_url)
         WebDriverWait(driver, 20).until(
             EC.presence_of_element_located((By.CLASS_NAME, "gsc-webResult"))
@@ -143,9 +160,10 @@ def fetch_justia_search_results(keyword, page):
         html = driver.page_source
     except Exception as err:
         st.error("Error fetching Justia results: " + str(err))
-        html = ""
     finally:
-        driver.quit()
+        if driver is not None:
+            driver.quit()
+    
     soup = BeautifulSoup(html, "html.parser")
     results = []
     for result in soup.select("div.gsc-webResult a.gs-title"):
@@ -183,9 +201,7 @@ def format_indian_kanoon_results(results, current_page):
     if "ik_counts" not in st.session_state:
         st.session_state.ik_counts = {}
     st.session_state.ik_counts[current_page] = len(results)
-    cumulative = 0
-    for page in range(1, current_page):
-        cumulative += st.session_state.ik_counts.get(page, 0)
+    cumulative = sum(st.session_state.ik_counts.get(page, 0) for page in range(1, current_page))
     start_num = cumulative + 1
     formatted = f"### Indian Kanoon Results (Page {current_page})\n\n"
     for i, res in enumerate(results, start=start_num):
@@ -204,9 +220,7 @@ def format_justia_results(results, current_page):
     if "justia_counts" not in st.session_state:
         st.session_state.justia_counts = {}
     st.session_state.justia_counts[current_page] = len(results)
-    cumulative = 0
-    for page in range(1, current_page):
-        cumulative += st.session_state.justia_counts.get(page, 0)
+    cumulative = sum(st.session_state.justia_counts.get(page, 0) for page in range(1, current_page))
     start_num = cumulative + 1
     formatted = f"### Justia Results (Page {current_page})\n\n"
     for i, res in enumerate(results, start=start_num):
@@ -222,7 +236,6 @@ def main():
     st.write("This dashboard searches multiple legal databases for your query.")
 
     # --- Checkbox Options to Choose Which Sources to Search ---
-    # These checkboxes let you select which sites are to be queried.
     search_ik = st.checkbox("Indian Kanoon", value=True)
     search_al = st.checkbox("AustLII", value=True)
     search_cl = st.checkbox("CanLII", value=True)
@@ -269,7 +282,7 @@ def main():
         
         st.session_state.results_fetched = True
 
-        # Reset stored counts for numbering
+        # Reset stored counts for continuous numbering
         st.session_state.ik_counts = {}
         st.session_state.justia_counts = {}
 
